@@ -1,0 +1,122 @@
+import matplotlib.pyplot as plt
+import numpy as np
+from math import pi
+from matplotlib.patches import Circle
+
+# Importing Player Data Categories
+categories = ['Shots', 'Key\nPasses', 'Tackles', 'Interceptions',
+              'Progressive\nCarries', 'Ball\nRecoveries', 'Progressive\nPasses',
+              'Passes into\nFinal Third']
+
+# Stats for first player
+rice_values = [2.38, 1.80, 2.25, 0.94, 2.27, 4.13, 7.04, 4.77]
+
+# Stats for second player
+caicedo_values = [0.68, 2.40, 2.30, 0.82, 3.46, 7.72, 11.71, 11.13]
+
+# Max values for each metric (for scaling) - used to calculate the scale labels
+max_values = [2.4, 2.6, 2.4, 1.0, 4.0, 8.0, 12.0, 11.2]
+
+# Calculating percentiles
+rice_percentiles = [(rice_values[i] / max_values[i]) * 100 for i in range(len(rice_values))]
+caicedo_percentiles = [(caicedo_values[i] / max_values[i]) * 100 for i in range(len(caicedo_values))]
+
+# Setup for radar
+num_vars = len(categories)
+angles = [n / float(num_vars) * 2 * pi for n in range(num_vars)]
+rice_percentiles += rice_percentiles[:1]
+caicedo_percentiles += caicedo_percentiles[:1]
+angles += angles[:1]
+
+# Create figure
+fig = plt.figure(figsize=(14, 14), dpi=300, facecolor='white')
+ax = plt.subplot(111, projection='polar')
+ax.set_facecolor('white')
+
+# Create alternating percentile bands with rings
+percentile_rings = [12.5, 25, 37.5, 50, 62.5, 75, 87.5, 100]
+colors = ['#E8E8E8', 'white', '#E8E8E8', 'white', '#E8E8E8', 'white', '#E8E8E8', 'white']
+
+# Draw alternating rings
+for i in range(len(percentile_rings)-1, -1, -1):
+    circle = Circle((0, 0), percentile_rings[i],
+                   transform=ax.transData._b,
+                   facecolor=colors[i] if i < len(colors) else 'white',
+                   edgecolor='#BBBBBB',
+                   linewidth=1.2, zorder=0)
+    ax.add_patch(circle)
+
+# Team colors
+rice_color = '#0046ff'  # Arsenal red
+caicedo_color = '#A50044'  # Chelsea blue
+
+# Plotting data
+ax.plot(angles, rice_percentiles, linewidth=3,
+        color=rice_color, zorder=3)
+ax.fill(angles, rice_percentiles, alpha=0.3, color=rice_color, zorder=2)
+
+ax.plot(angles, caicedo_percentiles, linewidth=3,
+        color=caicedo_color, zorder=3)
+ax.fill(angles, caicedo_percentiles, alpha=0.3, color=caicedo_color, zorder=2)
+
+# Configure the radar
+ax.set_theta_offset(pi / 2)
+ax.set_theta_direction(-1)
+ax.set_xticks(angles[:-1])
+ax.set_xticklabels([])
+ax.tick_params(axis='x', pad=50)
+
+# Set radial limits
+ax.set_ylim(0, 100)
+ax.set_yticks([12.5, 25, 37.5, 50, 62.5, 75, 87.5, 100])
+ax.set_yticklabels([])
+
+# Remove default grid
+ax.grid(False)
+ax.spines['polar'].set_visible(False)
+
+# Add category labels outside the chart
+for i, (angle, category) in enumerate(zip(angles[:-1], categories)):
+    label_distance = 115
+    x = angle
+    y = label_distance
+
+    ax.text(x, y, category, ha='center', va='center',
+           fontsize=12, weight='bold', color='#2C2C2C')
+
+# Add scale values for each metric on the rings
+for i, (angle, max_val) in enumerate(zip(angles[:-1], max_values)):
+    # Calculate 8 evenly spaced values from 0 to max
+    scale_values = [max_val * (j+1) / 8 for j in range(8)]
+
+    # Place these values at each ring intersection along this metric's angle
+    for j, (ring_pct, scale_val) in enumerate(zip(percentile_rings, scale_values)):
+        ax.text(angle, ring_pct, f'{scale_val:.1f}',
+               ha='center', va='center',
+               fontsize=8, weight='bold', color='#444444',
+               zorder=4)
+
+# Add title
+fig.text(0.5, 0.97, 'BELLINGHAM vs PEDRI',
+         ha='center', fontsize=26, weight='bold', color='#1a1a1a',
+         family='sans-serif')
+fig.text(0.5, 0.94, 'La Liga 2025/26 • Center Midfield Comparison • Stats Per 90 Minutes',
+         ha='center', fontsize=11, color='#555555')
+
+# Add player info boxes
+fig.text(0.15, 0.95, 'Jude Bellingham\nReal Madrid',
+         ha='center', fontsize=11, weight='bold', color=rice_color,
+         bbox=dict(boxstyle='round,pad=0.5', facecolor='white',
+                  edgecolor=rice_color, linewidth=2))
+
+fig.text(0.85, 0.95, 'Pedri\nBarcelona',
+         ha='center', fontsize=11, weight='bold', color=caicedo_color,
+         bbox=dict(boxstyle='round,pad=0.5', facecolor='white',
+                  edgecolor=caicedo_color, linewidth=2))
+
+# Add footnote
+fig.text(0.5, 0.03, 'Data: FBref • Visualisation by JakeInSport',
+         ha='center', fontsize=9, color='#777777', style='italic')
+
+plt.tight_layout(rect=[0, 0.04, 1, 0.93])
+plt.show()
